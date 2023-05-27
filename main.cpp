@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <sstream>
-#include <limits>
-#include <cmath>
+#include <regex>
+#include <iomanip>  // Required for setw and setfill
 
 using namespace std;
 
@@ -11,7 +11,7 @@ private:
     vector<int> rolls;
 
 public:
-    void addSet(int pins) {
+    void roll(int pins) {
         rolls.push_back(pins);
     }
 
@@ -27,11 +27,25 @@ public:
                 score += 10 + spareBonus(frameIndex);
                 frameIndex += 2;
             } else {
-                score += sumOfPinsInFrame(frameIndex);
+                score += sumOfPinsInSet(frameIndex);
                 frameIndex += 2;
             }
         }
+
         return score;
+    }
+
+    double calculatePercentage() {
+        return static_cast<double>(calculateScore()) / 300.0 * 100;
+    }
+
+    int calculateHandicap() {
+        return (200 - calculateScore()) / 10;
+    }
+
+    int compareNationalAverage() {
+        int nationalAverage = 150;
+        return calculateScore() - nationalAverage;
     }
 
 private:
@@ -40,7 +54,7 @@ private:
     }
 
     bool isSpare(int frameIndex) {
-        return sumOfPinsInFrame(frameIndex) == 10;
+        return rolls[frameIndex] + rolls[frameIndex + 1] == 10;
     }
 
     int strikeBonus(int frameIndex) {
@@ -51,26 +65,33 @@ private:
         return rolls[frameIndex + 2];
     }
 
-    int sumOfPinsInFrame(int frameIndex) {
+    int sumOfPinsInSet(int frameIndex) {
         return rolls[frameIndex] + rolls[frameIndex + 1];
     }
 };
 
-void promptEnter() {
-    cout << "Press Enter to continue..." << endl;
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    cin.get();
+string provideAdvice(int score) {
+    if (score < 100) {
+        return "Practice more on your aim and try to knock down more pins each time.";
+    } else if (score < 200) {
+        return "Work on your strikes and spares to get higher scores.";
+    } else {
+        return "You're doing great! Keep practicing to maintain your performance.";
+    }
+}
+
+bool validateInput(const string& input) {
+    regex r("(10)|([0-9], [0-9])");
+    return regex_match(input, r);
 }
 
 int main() {
     BowlingScoreCalculator calculator;
 
-    cout << "Enter each set as 'x, y' where x and y represent the number of pins knocked down in two attempts." << endl;
-    cout << "If you knock down all 10 pins in the first attempt, enter it as '10'." << endl;
-    cout << "Example game: 4, 3  5, 5  8, 1  10  3, 6  10  10  9, 0  0, 8  10, 7, 1" << endl;
-    cout << "Enter 'q' to finish entering sets." << endl;
-
-    promptEnter();
+    cout << "Enter each set as 'x' or 'x, y' where x and y represent the number of pins knocked down." << endl;
+    cout << "If you strike, just input '10'. For a spare, input two numbers like '5, 5'." << endl;
+    cout << "Example game: 4, 3  5, 5  8, 1  10  3, 6  10  10  9, 0  0, 8  10  7, 1" << endl;
+    cout << "Enter 'q' to quit the application without scoring your game." << endl;
 
     string input;
     int frame = 1;
@@ -78,27 +99,42 @@ int main() {
         cout << "Frame " << frame << " - Set: ";
         getline(cin, input);
 
-        if (input == "q")
-            break;
+        if (input == "q") {
+            cout << "You have chosen to quit the application. Your score will not be calculated. Goodbye." << endl;
+            return 0;
+        }
+
+        if (!validateInput(input)) {
+            cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, like '5, 5'." << endl;
+            continue;
+        }
 
         stringstream ss(input);
         int pins1, pins2 = 0;
-        char delimiter;
 
-        if (ss >> pins1) {
-            calculator.addSet(pins1);
-            if (pins1 != 10) {
-                if (!(ss >> delimiter >> pins2)) {
-                    cout << "Invalid input. You need to enter two numbers for this set." << endl;
-                    continue;
-                } else if (pins1 + pins2 > 10) {
-                    cout << "Invalid input. The sum of two attempts cannot exceed 10." << endl;
-                    continue;
-                }
-                calculator.addSet(pins2);
+        ss >> pins1;
+
+        if (ss.peek() == ',') {
+            ss.ignore();  // Ignore the comma
+            ss >> pins2;
+        }
+
+        if (pins1 == 10 || pins1 + pins2 == 10) { // Strike or spare
+            calculator.roll(pins1);
+            if (pins1 != 10 && frame == 10) // Spare on 10th frame
+                calculator.roll(pins2);
+            if (frame == 10) { // Bonus set for 10th frame
+                cout << "Bonus Set for 10th frame - Set: ";
+                int bonus1, bonus2;
+                cin >> bonus1 >> bonus2;
+                calculator.roll(bonus1);
+                calculator.roll(bonus2);
             }
+        } else if (pins1 + pins2 < 10) { // Normal frame
+            calculator.roll(pins1);
+            calculator.roll(pins2);
         } else {
-            cout << "Invalid input. Please enter sets in the format described above." << endl;
+            cout << "Invalid input. Please make sure your roll totals do not exceed 10 unless you struck." << endl;
             continue;
         }
 
@@ -106,22 +142,17 @@ int main() {
     }
 
     int score = calculator.calculateScore();
-    cout << "Final Score: " << score << endl;
+    cout << "Your game score is: " << setfill('0') << setw(3) << score << " / 300" << endl;
 
-    // Define and initialize variables for perfect score and national average
+    double percentage = calculator.calculatePercentage();
+    int handicap = calculator.calculateHandicap();
+    int comparedToAverage = calculator.compareNationalAverage();
+    string advice = provideAdvice(score);
 
-    const int perfectScore = 300;
-    const double nationalAverage = 150.0; // National average score (example value)
-
-    // Calculate the percentage difference compared to a perfect game
-    double percentageDifference = (score / static_cast<double>(perfectScore)) * 100.0;
-
-    // Calculate the handicap percentage based on the national average
-    double handicapPercentage = abs((percentageDifference - nationalAverage) / nationalAverage) * 100.0;
-
-    // Display the information
-    cout << "In contrast to a perfect game (300 points), your score is: " << percentageDifference << "%" << endl;
-    cout << "Compared to the national average score of " << nationalAverage << ", your handicap percentage is: " << handicapPercentage << "%" << endl;
+    cout << "Your score percentage is: " << percentage << "%" << endl;
+    cout << "Your handicap is: " << handicap << endl;
+    cout << "Compared to the national average (150), your score is: " << (comparedToAverage > 0 ? "+" : "") << comparedToAverage << endl;
+    cout << "Advice for improvement: " << advice << endl;
 
     return 0;
 }
