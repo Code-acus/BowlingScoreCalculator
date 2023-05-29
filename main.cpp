@@ -142,7 +142,8 @@ int main()
 
         if (!validateInput(input, frame))
         {
-            cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, like '5, 5'. For 10th frame, possible entries can be 'x, y, z', '10, x, y', 'x, y'." << endl;
+            cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, "
+                    "like '5, 5'. For 10th frame, possible entries can be 'x, y, z', '10, x, y', 'x, y'." << endl;
             continue;
         }
 
@@ -166,7 +167,8 @@ int main()
         if (pins1 + pins2 > 10 && frame < 10)
         {
             // Not allowed more than 10 pins in a frame before the 10th frame
-            cout << "Invalid input. Please make sure your roll totals do not exceed 10 unless it's the 10th frame and you struck or spared." << endl;
+            cout << "Invalid input. Please make sure your game totals do not exceed 10 unless it's the 10th "
+                    "frame and you struck or spared." << endl;
             continue;
         }
 
