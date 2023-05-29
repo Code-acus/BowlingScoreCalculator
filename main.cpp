@@ -2,7 +2,7 @@
 #include <vector>
 #include <sstream>
 #include <regex>
-#include <iomanip>  // Required for setw and setfill
+#include <iomanip>
 
 using namespace std;
 
@@ -80,9 +80,14 @@ string provideAdvice(int score) {
     }
 }
 
-bool validateInput(const string& input) {
-    regex r("(10)|([0-9], [0-9])");
-    return regex_match(input, r);
+bool validateInput(const string& input, int frame) {
+    regex r("(10)|([0-9], [0-9])|([0-9], 10)|([0-9]|10, [0-9]|10)");
+    if (frame < 10) return regex_match(input, r);
+    else {
+        // In frame 10, we can have two or three inputs, separated by ','
+        regex r10("(10, 10, [0-9]|10)|(10, [0-9], [0-9])|([0-9], [0-9])|([0-9], 10, [0-9])");
+        return regex_match(input, r10);
+    }
 }
 
 int main() {
@@ -104,13 +109,13 @@ int main() {
             return 0;
         }
 
-        if (!validateInput(input)) {
-            cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, like '5, 5'." << endl;
+        if (!validateInput(input, frame)) {
+            cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, like '5, 5'. For 10th frame, possible entries can be 'x, y, z', '10, x, y', 'x, y'." << endl;
             continue;
         }
 
         stringstream ss(input);
-        int pins1, pins2 = 0;
+        int pins1, pins2 = 0, pins3 = 0;
 
         ss >> pins1;
 
@@ -119,23 +124,20 @@ int main() {
             ss >> pins2;
         }
 
-        if (pins1 == 10 || pins1 + pins2 == 10) { // Strike or spare
-            calculator.roll(pins1);
-            if (pins1 != 10 && frame == 10) // Spare on 10th frame
-                calculator.roll(pins2);
-            if (frame == 10) { // Bonus set for 10th frame
-                cout << "Bonus Set for 10th frame - Set: ";
-                int bonus1, bonus2;
-                cin >> bonus1 >> bonus2;
-                calculator.roll(bonus1);
-                calculator.roll(bonus2);
-            }
-        } else if (pins1 + pins2 < 10) { // Normal frame
-            calculator.roll(pins1);
-            calculator.roll(pins2);
-        } else {
-            cout << "Invalid input. Please make sure your roll totals do not exceed 10 unless you struck." << endl;
+        if (ss.peek() == ',') {
+            ss.ignore();  // Ignore the comma
+            ss >> pins3;
+        }
+
+        if (pins1 + pins2 > 10 && frame < 10) {  // Not allowed more than 10 pins in a frame before the 10th
+            cout << "Invalid input. Please make sure your roll totals do not exceed 10 unless it's the 10th frame and you struck or spared." << endl;
             continue;
+        }
+
+        calculator.roll(pins1);
+        calculator.roll(pins2);
+        if(frame == 10) {
+            calculator.roll(pins3);
         }
 
         frame++;
@@ -156,3 +158,4 @@ int main() {
 
     return 0;
 }
+
