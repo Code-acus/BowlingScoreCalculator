@@ -6,91 +6,120 @@
 
 using namespace std;
 
-class BowlingScoreCalculator {
-private:
-    vector<int> rolls;
+class BowlingScoreCalculator
+{
+    private:
+        vector<int> rolls;
 
-public:
-    void roll(int pins) {
-        rolls.push_back(pins);
-    }
-
-    int calculateScore() {
-        int score = 0;
-        int frameIndex = 0;
-
-        for (int frame = 0; frame < 10; ++frame) {
-            if (isStrike(frameIndex)) {
-                score += 10 + strikeBonus(frameIndex);
-                frameIndex++;
-            } else if (isSpare(frameIndex)) {
-                score += 10 + spareBonus(frameIndex);
-                frameIndex += 2;
-            } else {
-                score += sumOfPinsInSet(frameIndex);
-                frameIndex += 2;
-            }
+    public:
+        void roll(int pins)
+        {
+            rolls.push_back(pins);
         }
 
-        return score;
-    }
+        int calculateScore()
+        {
+            int score = 0;
+            int frameIndex = 0;
 
-    double calculatePercentage() {
-        return static_cast<double>(calculateScore()) / 300.0 * 100;
-    }
+            for (int frame = 0; frame < 10; ++frame)
+            {
+                if (isStrike(frameIndex))
+                {
+                    score += 10 + strikeBonus(frameIndex);
+                    frameIndex++;
+                }
+                else if (isSpare(frameIndex))
+                {
+                    score += 10 + spareBonus(frameIndex);
+                    frameIndex += 2;
+                }
+                else
+                {
+                    score += sumOfPinsInSet(frameIndex);
+                    frameIndex += 2;
+                }
+            }
 
-    int calculateHandicap() {
-        return (200 - calculateScore()) / 10;
-    }
+            return score;
+        }
 
-    int compareNationalAverage() {
-        int nationalAverage = 150;
-        return calculateScore() - nationalAverage;
-    }
+        double calculatePercentage()
+        {
+            return static_cast<double>(calculateScore()) / 300.0 * 100;
+        }
 
-private:
-    bool isStrike(int frameIndex) {
-        return rolls[frameIndex] == 10;
-    }
+        int calculateHandicap()
+        {
+            return (200 - calculateScore()) / 10;
+        }
 
-    bool isSpare(int frameIndex) {
-        return rolls[frameIndex] + rolls[frameIndex + 1] == 10;
-    }
+        int compareNationalAverage()
+        {
+            int nationalAverage = 150;
+            return calculateScore() - nationalAverage;
+        }
 
-    int strikeBonus(int frameIndex) {
-        return rolls[frameIndex + 1] + rolls[frameIndex + 2];
-    }
+    private:
+        bool isStrike(int frameIndex)
+        {
+            return rolls[frameIndex] == 10;
+        }
 
-    int spareBonus(int frameIndex) {
-        return rolls[frameIndex + 2];
-    }
+        bool isSpare(int frameIndex)
+        {
+            return rolls[frameIndex] + rolls[frameIndex + 1] == 10;
+        }
 
-    int sumOfPinsInSet(int frameIndex) {
-        return rolls[frameIndex] + rolls[frameIndex + 1];
-    }
+        int strikeBonus(int frameIndex)
+        {
+            return rolls[frameIndex + 1] + rolls[frameIndex + 2];
+        }
+
+        int spareBonus(int frameIndex)
+        {
+            return rolls[frameIndex + 2];
+        }
+
+        int sumOfPinsInSet(int frameIndex)
+        {
+            return rolls[frameIndex] + rolls[frameIndex + 1];
+        }
+
 };
 
-string provideAdvice(int score) {
-    if (score < 100) {
+string provideAdvice(int score)
+{
+    if (score < 100)
+    {
         return "Practice more on your aim and try to knock down more pins each time.";
-    } else if (score < 200) {
+    }
+
+    else if (score < 200)
+    {
         return "Work on your strikes and spares to get higher scores.";
-    } else {
+    }
+
+    else
+    {
         return "You're doing great! Keep practicing to maintain your performance.";
     }
 }
 
-bool validateInput(const string& input, int frame) {
+bool validateInput(const string& input, int frame)
+{
     regex r("(10)|([0-9], [0-9])|([0-9], 10)|([0-9]|10, [0-9]|10)");
     if (frame < 10) return regex_match(input, r);
-    else {
+    else
+    {
         // In frame 10, we can have two or three inputs, separated by ','
         regex r10("(10, 10, [0-9]|10)|(10, [0-9], [0-9])|([0-9], [0-9])|([0-9], 10, [0-9])");
         return regex_match(input, r10);
     }
 }
 
-int main() {
+int main()
+{
     BowlingScoreCalculator calculator;
 
     cout << "Enter each set as 'x' or 'x, y' where x and y represent the number of pins knocked down." << endl;
@@ -100,16 +129,19 @@ int main() {
 
     string input;
     int frame = 1;
-    while (frame <= 10) {
+    while (frame <= 10)
+    {
         cout << "Frame " << frame << " - Set: ";
         getline(cin, input);
 
-        if (input == "q") {
+        if (input == "q")
+        {
             cout << "You have chosen to quit the application. Your score will not be calculated. Goodbye." << endl;
             return 0;
         }
 
-        if (!validateInput(input, frame)) {
+        if (!validateInput(input, frame))
+        {
             cout << "Invalid input. Please make sure you either input '10' or two numbers separated by a comma and a space, like '5, 5'. For 10th frame, possible entries can be 'x, y, z', '10, x, y', 'x, y'." << endl;
             continue;
         }
@@ -119,24 +151,30 @@ int main() {
 
         ss >> pins1;
 
-        if (ss.peek() == ',') {
+        if (ss.peek() == ',')
+        {
             ss.ignore();  // Ignore the comma
             ss >> pins2;
         }
 
-        if (ss.peek() == ',') {
+        if (ss.peek() == ',')
+        {
             ss.ignore();  // Ignore the comma
             ss >> pins3;
         }
 
-        if (pins1 + pins2 > 10 && frame < 10) {  // Not allowed more than 10 pins in a frame before the 10th
+        if (pins1 + pins2 > 10 && frame < 10)
+        {
+            // Not allowed more than 10 pins in a frame before the 10th frame
             cout << "Invalid input. Please make sure your roll totals do not exceed 10 unless it's the 10th frame and you struck or spared." << endl;
             continue;
         }
 
         calculator.roll(pins1);
         calculator.roll(pins2);
-        if(frame == 10) {
+
+        if(frame == 10)
+        {
             calculator.roll(pins3);
         }
 
